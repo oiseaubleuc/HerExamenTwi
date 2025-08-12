@@ -12,11 +12,9 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    // Tweets
     Route::post('/tweets', [TweetController::class, 'store'])->name('tweets.store');
     Route::delete('/tweets/{tweet}', [TweetController::class, 'destroy'])->name('tweets.destroy');
 
-    // Likes
     Route::post('/tweets/{tweet}/like', [LikeController::class, 'store'])->name('likes.store');
     Route::delete('/tweets/{tweet}/like', [LikeController::class, 'destroy'])->name('likes.destroy');
 
