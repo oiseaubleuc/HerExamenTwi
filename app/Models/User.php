@@ -13,10 +13,10 @@ use App\Models\Like;
 
 class User extends Authenticatable
 {
-
+    use HasFactory;
     protected $fillable = [
         'name',
-        'username', // keep if you have this column; remove if not using usernames
+        'username',
         'email',
         'password',
     ];
