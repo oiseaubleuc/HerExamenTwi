@@ -1,0 +1,80 @@
+name: CI (Laravel Build & Test)
+
+on:
+  pull_request:
+  push:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }} • ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        php: ['8.2', '8.3']  
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:a/vUEkSwZm9RJW5wstaCBFBwn9kv5nGXUvvECZN/qLo=
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
+      CACHE_DRIVER: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          extensions: mbstring, intl, pcntl, bcmath, pdo_sqlite, mysql, gd
+          tools: composer
+
+      - name: Validate composer.json
+        run: composer validate --no-interaction --strict
+
+      - name: Install Composer dependencies (cached)
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --no-ansi --no-interaction --no-progress --prefer-dist
+
+      - name: Prepare environment
+        run: |
+          cp -n .env.example .env || true
+          php artisan key:generate --force
+          mkdir -p database
+          rm -f database/database.sqlite
+          touch database/database.sqlite
+
+      - name: Run migrations (SQLite)
+        run: php artisan migrate --force
+
+      - name: Setup Node (optional)
+        if: ${{ hashFiles('**/package.json') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install & build frontend (optional)
+        if: ${{ hashFiles('**/package.json') != '' }}
+        run: |
+          npm ci
+          npm run build --if-present
+
+      - name: Run tests (artisan)
+        run: php artisan test --without-tty --no-interaction
+
+    
