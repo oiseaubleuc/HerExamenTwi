@@ -1,15 +1,13 @@
-# .github/workflows/ci.yml
-name: Tests (Laravel)
+name: CI/CD
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     env:
       APP_ENV: testing
@@ -18,7 +16,6 @@ jobs:
       CACHE_DRIVER: array
       SESSION_DRIVER: array
       QUEUE_CONNECTION: sync
-
     steps:
       - uses: actions/checkout@v4
 
@@ -30,10 +27,21 @@ jobs:
           tools: composer
           coverage: none
 
-      - name: Install dependencies
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Prepare app
+      - name: Prepare application
         run: |
           cp -n .env.example .env || true
           php artisan key:generate --force
@@ -41,8 +49,17 @@ jobs:
           rm -f database/database.sqlite
           touch database/database.sqlite
 
-      - name: Migrate
+      - name: Run migrations
         run: php artisan migrate --force
 
       - name: Run tests
         run: php artisan test --without-tty
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        run: echo "Deploy step - add your deployment script here"
