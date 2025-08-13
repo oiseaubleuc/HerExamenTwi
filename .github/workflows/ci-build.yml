@@ -2,8 +2,10 @@ name: CI (Laravel Build & Test)
 
 on:
   pull_request:
+    branches: [ main ]   # PR's die naar main gaan
   push:
-    branches: [ main, develop ]
+    branches: [ main ]   # directe pushes op main
+  workflow_dispatch:      # handmatig starten (optioneel)
 
 permissions:
   contents: read
@@ -31,7 +33,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.2'      # zet desnoods op '8.3' als jij dat gebruikt
           extensions: mbstring, bcmath, pdo_sqlite
           coverage: none
           tools: composer
