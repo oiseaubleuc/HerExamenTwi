@@ -1,23 +1,16 @@
-name: CI (Laravel Build & Test)
+# .github/workflows/ci.yml
+name: Tests (Laravel)
 
 on:
-  pull_request:
-    branches: [ main ]   # PR's die naar main gaan
   push:
-    branches: [ main ]   # directe pushes op main
-  workflow_dispatch:      # handmatig starten (optioneel)
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     env:
       APP_ENV: testing
       DB_CONNECTION: sqlite
@@ -27,29 +20,23 @@ jobs:
       QUEUE_CONNECTION: sync
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'      # zet desnoods op '8.3' als jij dat gebruikt
-          extensions: mbstring, bcmath, pdo_sqlite
-          coverage: none
+          php-version: '8.2'
+          extensions: pdo_sqlite, mbstring, bcmath
           tools: composer
+          coverage: none
 
-      - name: Install Composer dependencies (cached)
-        uses: ramsey/composer-install@v3
-        with:
-          composer-options: --no-ansi --no-interaction --no-progress --prefer-dist
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Prepare .env & app key
+      - name: Prepare app
         run: |
           cp -n .env.example .env || true
           php artisan key:generate --force
-
-      - name: Prepare SQLite database
-        run: |
           mkdir -p database
           rm -f database/database.sqlite
           touch database/database.sqlite
