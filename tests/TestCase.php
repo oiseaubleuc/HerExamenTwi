@@ -11,9 +11,6 @@ abstract class TestCase extends BaseTestCase
 {
     use InteractsWithViews;
 
-    /**
-     * Bootstrap the application for testing (i.p.v. de CreatesApplication trait)
-     */
     public function createApplication()
     {
         $app = require __DIR__ . '/../bootstrap/app.php';
@@ -24,11 +21,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        if (method_exists($this, 'withoutVite')) {
-            $this->withoutVite();
-        } else {
-            Blade::directive('vite', fn () => '');
-        }
+        if (method_exists($this, 'withoutVite')) $this->withoutVite();
+        else Blade::directive('vite', fn () => '');
     }
 }
