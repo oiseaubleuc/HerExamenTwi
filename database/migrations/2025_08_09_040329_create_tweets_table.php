@@ -10,11 +10,14 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void {
-        Schema::create('tweets', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->text('body');
-            $table->timestamps();
+        Schema::create('tweets', function (Blueprint $t) {
+            $t->id();
+            $t->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $t->string('body', 280);
+            $t->string('media_path')->nullable();
+            $t->enum('visibility', ['public','followers'])->default('public');
+            $t->timestamps();
+            $t->index(['user_id','created_at']);
         });
     }
 

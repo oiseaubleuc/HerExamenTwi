@@ -2,27 +2,32 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, BelongsToMany, HasMany};
 
 class Tweet extends Model
 {
-    use HasFactory;
+    protected $fillable = ['user_id','body','media_path','visibility'];
 
-    protected $fillable = ['body', 'user_id'];
+    public function user(): BelongsTo { return $this->belongsTo(User::class); }
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
+    public function likes(): BelongsToMany {
+        return $this->belongsToMany(User::class, 'likes', 'tweet_id', 'user_id')->withTimestamps();
     }
 
-    public function likes()
-    {
-        return $this->hasMany(Like::class);
+    public function replies(): HasMany { return $this->hasMany(Reply::class); }
+
+    public function scopeFeed($q, User $user) {
+        return $q->whereIn('user_id', function($s) use ($user) {
+            $s->select('followed_id')->from('follows')->where('follower_id', $user->id);
+        })->orWhere('user_id', $user->id)
+            ->withCount(['likes','replies'])
+            ->latest();
     }
 
-    public function replies()
-    {
-        return $this->hasMany(Reply::class);
+    public function likedBy(User $user): bool {
+        return $this->likes()->where('user_id', $user->id)->exists();
     }
+
+
 }

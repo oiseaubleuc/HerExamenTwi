@@ -10,13 +10,11 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void {
-        Schema::create('likes', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('tweet_id')->constrained()->cascadeOnDelete();
-            $table->timestamps();
-
-            $table->unique(['user_id','tweet_id']);
+        Schema::create('likes', function (Blueprint $t) {
+            $t->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $t->foreignId('tweet_id')->constrained('tweets')->cascadeOnDelete();
+            $t->timestamps();
+            $t->primary(['user_id','tweet_id']);
         });
     }
 
