@@ -6,7 +6,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -16,10 +15,10 @@ jobs:
           extensions: pdo_sqlite, sqlite3
           tools: composer:v2
 
-      - name: Install deps
+      - name: Composer install
         run: composer install --prefer-dist --no-interaction --no-progress
 
-      - name: Prepare database
+      - name: Prepare DB
         run: |
           mkdir -p database
           touch database/database.sqlite
