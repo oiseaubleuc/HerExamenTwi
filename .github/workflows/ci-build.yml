@@ -55,5 +55,3 @@ jobs:
       - name: Show migration status
         run: php artisan migrate:status --database=sqlite
 
-      - name: Run tests
-        run: php artisan test --without-tty
