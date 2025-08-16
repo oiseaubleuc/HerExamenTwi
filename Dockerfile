@@ -12,7 +12,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM php:8.3-fpm-alpine
+FROM php:8.2-fpm-alpine
 WORKDIR /var/www/html
 
 RUN apk add --no-cache git curl icu-dev oniguruma-dev libzip-dev zlib-dev sqlite-dev \
