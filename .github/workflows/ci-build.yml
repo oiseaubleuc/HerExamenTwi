@@ -47,4 +47,4 @@ jobs:
         run: php artisan migrate --env=testing --force
 
       - name: Run tests
-        run: php artisan test -v --env=testing
+        run: php artisan test --env=testing
