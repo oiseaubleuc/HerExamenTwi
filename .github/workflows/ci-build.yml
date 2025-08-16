@@ -52,3 +52,4 @@ jobs:
       - name: Run tests
         working-directory: ${{ env.PROJECT_DIR }}
         run: php artisan test --env=testing -v
+
