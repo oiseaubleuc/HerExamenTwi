@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
+      - name: Run composer
+        run: composer require --dev brianium/paratest
+
       - name: Copy .env
         run: cp .env.example .env
 
@@ -34,3 +37,7 @@ jobs:
 
       - name: Run tests
         run: php artisan test --parallel
+
+
+
+
