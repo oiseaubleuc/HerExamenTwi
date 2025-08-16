@@ -6,10 +6,11 @@ RUN apk add --no-cache git unzip icu-dev oniguruma-dev libzip-dev zlib-dev
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --ignore-platform-reqs
+RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --ignore-platform-reqs --no-scripts
 
 COPY . .
-RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --ignore-platform-reqs
+RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --ignore-platform-reqs --no-scripts
+
 
 FROM node:20-alpine AS assets
 WORKDIR /app
@@ -17,6 +18,7 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
+
 
 FROM php:8.3-fpm-alpine
 WORKDIR /var/www/html
