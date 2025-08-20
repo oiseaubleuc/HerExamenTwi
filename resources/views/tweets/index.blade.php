@@ -18,7 +18,7 @@
             </form>
         @else
             <div class="bg-white dark:bg-neutral-900 p-4 rounded-xl shadow text-center text-sm">
-                <a class="text-blue-600 underline" href="{{ route('login') }}">Log in</a> to post a tweet.
+                <a class="text-blue-600 underline" href="{{ route('login') }}">Log in</a> to post a tweet with things
             </div>
         @endauth
 
