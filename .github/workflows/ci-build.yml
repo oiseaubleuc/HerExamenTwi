@@ -2,11 +2,26 @@ name: CI Docker Build & Push
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "test" ]
+
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   tests:
     runs-on: ubuntu-latest
+    env:
+      APP_ENV: testing
+      APP_DEBUG: true
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
+      CACHE_DRIVER: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      BROADCAST_DRIVER: log
+      MAIL_MAILER: log
 
     steps:
       - name: Checkout
@@ -19,32 +34,60 @@ jobs:
           extensions: pdo_sqlite, mbstring, bcmath, intl
           coverage: none
 
-      - name: Cache Composer
+      - name: Cache Composer (vendor)
         uses: actions/cache@v4
         with:
-          path: ~/.composer/cache/files
-          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          path: vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Write .env.testing
+      - name: Prepare .env & APP_KEY
         run: |
-          cat > .env.testing <<'ENV'
-          APP_ENV=testing
-          APP_KEY=base64:Q7wXtO8a3dRQHq5IM4NsPZ8MthM4T0DyQw5sV0D9Nl8=
-          APP_DEBUG=true
-          LOG_CHANNEL=stack
-          CACHE_DRIVER=array
-          SESSION_DRIVER=array
-          QUEUE_CONNECTION=sync
-          DB_CONNECTION=sqlite
-          DB_DATABASE=:memory:
-          ENV
+          php -r "file_exists('.env') || copy('.env.example', '.env');"
+          php artisan key:generate --force
 
-      - name: Run migrations (test DB)
-        run: php artisan migrate --env=testing --force
+      - name: Prepare SQLite file database
+        run: |
+          mkdir -p database
+          touch database/database.sqlite
+
+      - name: Run migrations (once for testing DB)
+        run: php artisan migrate --force
 
       - name: Run tests
-        run: php artisan test --env=testing
+        run: php artisan test -v
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laravel-logs
+          path: storage/logs/*.log
+
+  build-assets:
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload built assets (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-build
+          path: public/build/
+
