@@ -2,18 +2,12 @@ name: CI Docker Build & Push
 
 on:
   push:
-    branches:
-      - main
-      - test
-      - dev
+    branches: [ "main" ]
+
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
-
-permissions:
-  contents: read
-  packages: write
 
 jobs:
   tests:
@@ -28,42 +22,50 @@ jobs:
       QUEUE_CONNECTION: sync
       BROADCAST_DRIVER: log
       MAIL_MAILER: log
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.3
           extensions: pdo_sqlite, mbstring, bcmath, intl
           coverage: none
+
       - name: Cache Composer (vendor)
         uses: actions/cache@v4
         with:
           path: vendor
           key: composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: composer-${{ runner.os }}-
+
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
+
       - name: Prepare .env & APP_KEY
         run: |
           php -r "file_exists('.env') || copy('.env.example', '.env');"
           php artisan key:generate --force
+
       - name: Prepare SQLite file database
         run: |
           mkdir -p database
           touch database/database.sqlite
+
       - name: Run migrations (once for testing DB)
         run: php artisan migrate --force
+
       - name: Run tests
         run: php artisan test
+
       - name: Upload logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: laravel-logs
           path: storage/logs/*.log
-          if-no-files-found: ignore
 
   build-assets:
     runs-on: ubuntu-latest
@@ -71,21 +73,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+
       - name: Install & build
         run: |
           npm ci
           npm run build
+
       - name: Upload built assets (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: public-build
           path: public/build/
-          if-no-files-found: ignore
 
   docker:
     runs-on: ubuntu-latest
@@ -93,23 +97,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Download built assets
         uses: actions/download-artifact@v4
         with:
           name: public-build
           path: public/build
+
       - name: Set lowercase image vars
         run: |
           echo "IMAGE_NAME=ghcr.io/$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
           echo "IMAGE_TAG=$(echo $GITHUB_REF_NAME | tr '[:upper:]' '[:lower:]' | tr '/' '-')" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build & Push image
         uses: docker/build-push-action@v5
         with:
@@ -121,34 +130,3 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: docker
-    steps:
-      - name: Upload compose/nginx to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          source: "docker-compose.yml,nginx.conf"
-          target: "/srv/herexam"
-          overwrite: true
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            set -e
-            mkdir -p /srv/herexam
-            BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
-            IMAGE="ghcr.io/$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]'):${BRANCH}"
-            echo '${{ secrets.CR_PAT }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
-            sed -i -E "s|^([[:space:]]*)image:.*$|\1image: ${IMAGE}|" /srv/herexam/docker-compose.yml
-            docker compose -f /srv/herexam/docker-compose.yml pull
-            docker compose -f /srv/herexam/docker-compose.yml up -d
