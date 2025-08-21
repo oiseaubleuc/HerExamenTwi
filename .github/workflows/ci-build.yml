@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+  packages: write
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -65,6 +69,7 @@ jobs:
         with:
           name: laravel-logs
           path: storage/logs/*.log
+          if-no-files-found: ignore
 
   build-assets:
     runs-on: ubuntu-latest
@@ -97,8 +102,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    env:
-      IMAGE_NAME: ghcr.io/${{ toLower(github.repository) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -108,6 +111,9 @@ jobs:
         with:
           name: public-build
           path: public/build
+
+      - name: Set IMAGE_NAME (lowercase)
+        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -148,18 +154,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: docker
     steps:
-      - name: Upload compose/nginx to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          source: "docker-compose.yml,nginx.conf"
-          target: "/srv/herexam"
-          overwrite: true
-
-      - name: Deploy via SSH
+      - name: Deploy via SSH (pull & run zonder compose)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -168,15 +163,13 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
-            mkdir -p /srv/herexam
             BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
             IMAGE="ghcr.io/$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]'):${BRANCH}"
+
             echo '${{ secrets.CR_PAT }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+
             docker pull "$IMAGE"
-            if [ -f /srv/herexam/docker-compose.yml ]; then
-              sed -i -E "s|(^[[:space:]]*image:[[:space:]]*).*$|\1${IMAGE}|" /srv/herexam/docker-compose.yml
-              docker compose -f /srv/herexam/docker-compose.yml up -d
-            else
-              docker rm -f herexam || true
-              docker run -d --name herexam -p 9000:9000 "$IMAGE"
-            fi
+
+            docker rm -f herexam || true
+            docker run -d --name herexam -p 9000:9000 "$IMAGE"
+
