@@ -48,12 +48,10 @@ jobs:
         run: |
           php -r "file_exists('.env') || copy('.env.example', '.env');"
           php artisan key:generate --force
-
       - name: Prepare SQLite file database
         run: |
           mkdir -p database
           touch database/database.sqlite
-
       - name: Run migrations (once for testing DB)
         run: php artisan migrate --force
 
