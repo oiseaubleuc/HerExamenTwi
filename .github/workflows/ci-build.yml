@@ -154,22 +154,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: docker
     steps:
-      - name: Deploy via SSH (pull & run zonder compose)
+      - name: Deploy via SSH (anon pull, geen PAT nodig)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          envs: GITHUB_REF_NAME,GITHUB_REPOSITORY
           script: |
             set -e
-            BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
-            IMAGE="ghcr.io/$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]'):${BRANCH}"
-
-            echo '${{ secrets.CR_PAT }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
-
+            BRANCH=$(echo "$GITHUB_REF_NAME" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+            IMAGE="ghcr.io/$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]'):${BRANCH}"
+            # Publiek → geen login nodig
             docker pull "$IMAGE"
-
             docker rm -f herexam || true
             docker run -d --name herexam -p 9000:9000 "$IMAGE"
-
