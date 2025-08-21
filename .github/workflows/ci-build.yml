@@ -91,21 +91,21 @@ jobs:
           name: public-build
           path: public/build/
 
-deploy:
-  runs-on: ubuntu-latest
-  needs: docker
-  steps:
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        port: ${{ secrets.SSH_PORT }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_KEY }}
-        script: |
-          set -e
-          BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
-          IMAGE="ghcr.io/$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]'):${BRANCH}"
-          echo '${{ secrets.CR_PAT }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
-          docker pull "$IMAGE"
-          docker compose -f /srv/herexam/docker-compose.yml up -d
+    deploy:
+      runs-on: ubuntu-latest
+      needs: docker
+      steps:
+        - name: Deploy via SSH
+          uses: appleboy/ssh-action@v1.0.3
+          with:
+            host: ${{ secrets.SSH_HOST }}
+            port: ${{ secrets.SSH_PORT }}
+            username: ${{ secrets.SSH_USER }}
+            key: ${{ secrets.SSH_KEY }}
+            script: |
+              set -e
+              BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+              IMAGE="ghcr.io/$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]'):${BRANCH}"
+              echo '${{ secrets.CR_PAT }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+              docker pull "$IMAGE"
+              docker compose -f /srv/herexam/docker-compose.yml up -d
