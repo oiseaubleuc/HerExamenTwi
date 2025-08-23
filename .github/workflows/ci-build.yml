@@ -154,7 +154,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: docker
     steps:
-      - name: Deploy via SSH (anon pull, geen PAT nodig)
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
