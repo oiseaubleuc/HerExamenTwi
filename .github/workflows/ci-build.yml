@@ -21,6 +21,7 @@ jobs:
     env:
       APP_ENV: testing
       APP_DEBUG: true
+      APP_KEY: base64:EddjxJdefepiBcRRe/1PoS8OhH9L0SaGWo4Yb8hNwuM=
       DB_CONNECTION: sqlite
       DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
       CACHE_DRIVER: array
@@ -50,17 +51,12 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Prepare .env & APP_KEY
-        run: |
-          php -r "file_exists('.env') || copy('.env.example', '.env');"
-          php artisan key:generate --force
-
       - name: Prepare SQLite file database
         run: |
           mkdir -p database
           touch database/database.sqlite
 
-      - name: Run migrations (once for testing DB)
+      - name: Run migrations
         run: php artisan migrate --force
 
       - name: Run tests
