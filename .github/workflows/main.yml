@@ -1,0 +1,128 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, dev, test ]
+  pull_request:
+    branches: [ main, dev, test ]
+
+jobs:
+  test:
+    name: Tests & Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+        coverage: none
+    
+    - name: Install Composer Dependencies
+      run: composer install --prefer-dist --no-interaction --no-progress
+    
+    - name: Create SQLite Database
+      run: |
+        touch database/database.sqlite
+        php artisan migrate --force
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install NPM Dependencies
+      run: npm ci
+    
+    - name: Build Frontend Assets
+      run: npm run build
+    
+    - name: Run Tests
+      run: php artisan test
+    
+    - name: PHP Code Style
+      run: ./vendor/bin/pint --test
+
+  deploy-test:
+    name: Deploy to Test
+    needs: test
+    if: github.ref == 'refs/heads/test'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build and Push Test Image
+      uses: docker/build-push-action@v4
+      with:
+        push: true
+        tags: ghcr.io/${{ github.repository }}:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Deploy to Test Server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.TEST_SSH_HOST }}
+        username: ${{ secrets.TEST_SSH_USERNAME }}
+        key: ${{ secrets.TEST_SSH_PRIVATE_KEY }}
+        script: |
+          cd /var/www/mini-twitter
+          docker pull ghcr.io/${{ github.repository }}:test
+          docker-compose down
+          docker-compose up -d
+
+  deploy-prod:
+    name: Deploy to Production
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build and Push Production Image
+      uses: docker/build-push-action@v4
+      with:
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}:latest
+          ghcr.io/${{ github.repository }}:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Deploy to Production Server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PROD_SSH_HOST }}
+        username: ${{ secrets.PROD_SSH_USERNAME }}
+        key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+        script: |
+          cd /var/www/mini-twitter
+          docker pull ghcr.io/${{ github.repository }}:latest
+          docker-compose down
+          docker-compose up -d
