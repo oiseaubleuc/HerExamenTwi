@@ -30,10 +30,14 @@
                         <a href="{{ route('profile.edit') }}"
                            class="px-4 py-2 rounded-full border bg-white text-sm">Edit profile</a>
                     @else
-                        {{-- Volgen/ontvolgen knop kun je later koppelen --}}
                         <form method="POST" action="{{ route('users.follow', $user) }}">
                             @csrf
-                            <button class="px-4 py-2 rounded-full bg-black text-white text-sm">Follow</button>
+                            @php
+                                $isFollowing = auth()->user()->isFollowing($user);
+                            @endphp
+                            <button class="px-4 py-2 rounded-full {{ $isFollowing ? 'bg-white border border-gray-300 hover:bg-red-50' : 'bg-black hover:bg-gray-800' }} text-sm {{ $isFollowing ? 'text-black' : 'text-white' }}">
+                                {{ $isFollowing ? 'Unfollow' : 'Follow' }}
+                            </button>
                         </form>
                     @endif
                 @endauth

@@ -30,6 +30,7 @@ RUN apk add --no-cache git curl icu-dev oniguruma-dev libzip-dev zlib-dev sqlite
 COPY --chown=www-data:www-data . .
 COPY --from=vendor /app/vendor /var/www/html/vendor
 COPY --from=assets /app/public/build /var/www/html/public/build
+COPY php.ini /usr/local/etc/php/conf.d/custom.ini
 
 RUN mkdir -p storage bootstrap/cache && chown -R www-data:www-data storage bootstrap/cache
 

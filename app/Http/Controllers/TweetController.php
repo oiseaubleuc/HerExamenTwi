@@ -4,16 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Tweet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TweetController extends Controller
 {
     public function index(Request $request)
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
 
         $tweets = Tweet::query()
-            ->with('user')
-            ->withCount(['likes','replies'])
+            ->with(['user', 'retweets'])
+            ->withCount(['likes', 'replies', 'retweets'])
             ->withExists([
                 'likes as liked_by_auth' => fn($q) => $q->where('user_id', $userId),
             ])
@@ -26,7 +27,7 @@ class TweetController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'body' => ['required','string','max:280'],
+            'body' => ['required', 'string', 'max:280'],
         ]);
 
         $request->user()->tweets()->create($data);
@@ -36,7 +37,7 @@ class TweetController extends Controller
 
     public function destroy(Tweet $tweet)
     {
-        abort_unless($tweet->user_id === auth()->id(), 403);
+        abort_unless($tweet->user_id === Auth::id(), 403);
         $tweet->delete();
 
         return back()->with('status', 'deleted');

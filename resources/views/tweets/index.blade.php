@@ -17,8 +17,18 @@
                 </div>
             </form>
         @else
-            <div class="bg-white dark:bg-neutral-900 p-4 rounded-xl shadow text-center text-sm">
-                <a class="text-blue-600 underline" href="{{ route('login') }}">Log in</a> to post a tweet with things
+            <div class="bg-white p-6 rounded-xl shadow-sm text-center">
+                <h2 class="text-xl font-semibold mb-4">Join the conversation!</h2>
+                <div class="space-x-4">
+                    <a href="{{ route('login') }}" 
+                       class="inline-block px-6 py-2 bg-blue-500 text-white font-medium rounded-full hover:bg-blue-600 transition-colors">
+                        Log in
+                    </a>
+                    <a href="{{ route('register') }}" 
+                       class="inline-block px-6 py-2 bg-white text-blue-500 font-medium rounded-full border border-blue-500 hover:bg-blue-50 transition-colors">
+                        Sign up
+                    </a>
+                </div>
             </div>
         @endauth
 

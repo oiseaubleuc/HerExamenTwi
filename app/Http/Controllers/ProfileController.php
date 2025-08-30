@@ -31,13 +31,19 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($request->hasFile('avatar')) {
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar_path = $path;
         }
 
-        $request->user()->save();
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
@@ -70,36 +76,37 @@ class ProfileController extends Controller
         $tab = $request->query('tab', 'tweets');
         $uid = auth()->id();
 
-        $user->loadCount(['followers','following']);
+        $user->loadCount(['followers', 'following']);
 
         $baseTweets = Tweet::where('user_id', $user->id)
-            ->with(['user','replies.user'])
-            ->withCount(['likes','replies'])
+            ->with(['user', 'replies.user'])
+            ->withCount(['likes', 'replies'])
             ->latest();
 
         if ($uid) {
-            $baseTweets->withExists(['likes as liked_by_auth' => fn($q) => $q->where('user_id',$uid)]);
+            $baseTweets->withExists(['likes as liked_by_auth' => fn($q) => $q->where('user_id', $uid)]);
         }
 
-        $tweets = null; $replies = null;
+        $tweets = null;
+        $replies = null;
         switch ($tab) {
             case 'media':
                 $tweets = (clone $baseTweets)->whereNotNull('media_path')->paginate(20);
                 break;
             case 'likes':
-                $tweets = Tweet::whereHas('likes', fn($q) => $q->where('users.id',$user->id))
-                    ->with(['user','replies.user'])->withCount(['likes','replies'])->latest();
-                if ($uid) $tweets->withExists(['likes as liked_by_auth' => fn($q)=>$q->where('user_id',$uid)]);
+                $tweets = Tweet::whereHas('likes', fn($q) => $q->where('users.id', $user->id))
+                    ->with(['user', 'replies.user'])->withCount(['likes', 'replies'])->latest();
+                if ($uid) $tweets->withExists(['likes as liked_by_auth' => fn($q) => $q->where('user_id', $uid)]);
                 $tweets = $tweets->paginate(20);
                 break;
             case 'replies':
-                $replies = Reply::where('user_id',$user->id)->with(['user','tweet.user'])->latest()->paginate(20);
+                $replies = Reply::where('user_id', $user->id)->with(['user', 'tweet.user'])->latest()->paginate(20);
                 break;
             default:
                 $tweets = $baseTweets->paginate(20);
         }
 
-        return view('profile.show', compact('user','tab','tweets','replies'));
+        return view('profile.show', compact('user', 'tab', 'tweets', 'replies'));
     }
 
     public function me()
@@ -108,5 +115,4 @@ class ProfileController extends Controller
         abort_unless($u && $u->username, 404, 'Set your username first.');
         return redirect()->route('profile.show', $u->username);
     }
-
 }
