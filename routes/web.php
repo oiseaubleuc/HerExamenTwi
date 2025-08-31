@@ -8,9 +8,7 @@ use App\Http\Controllers\ProfileController;
 
 Route::get('/', [TweetController::class, 'index'])->name('tweets.index');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+
 
 Route::middleware('auth')->group(function () {
     // Tweets
@@ -32,4 +30,4 @@ Route::get('/@{user:username}', [\App\Http\Controllers\ProfileController::class,
     ->name('profile.show');
 Route::get('/@{username}', [ProfileController::class, 'show'])->name('profile.show');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

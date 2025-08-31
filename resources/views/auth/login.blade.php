@@ -1,47 +1,55 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+@extends('layouts.guest')
 
-    <form method="POST" action="{{ route('login') }}">
+@section('content')
+    <div class="text-center mb-8">
+        <h2 class="text-2xl font-bold text-white mb-2">Welkom bij Mini Twitter</h2>
+        <p class="text-dark-bg-300">Log in op je account om de functionaliteiten te testen</p>
+    </div>
+
+    <form method="POST" action="{{ route('login') }}" class="space-y-6">
         @csrf
 
-        <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <label for="email" class="block text-sm font-medium text-white mb-2">Email adres</label>
+            <input type="email" name="email" id="email" value="{{ old('email') }}" required
+                class="w-full px-4 py-3 bg-dark-bg-800 border border-dark-bg-700 rounded-lg text-white placeholder-dark-bg-400 focus:outline-none focus:ring-2 focus:ring-dark-green-500 focus:border-dark-green-500 transition-all duration-200"
+                placeholder="Voer je email adres in">
+            @error('email')
+                <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+            @enderror
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div>
+            <label for="password" class="block text-sm font-medium text-white mb-2">Wachtwoord</label>
+            <input type="password" name="password" id="password" required
+                class="w-full px-4 py-3 bg-dark-bg-800 border border-dark-bg-700 rounded-lg text-white placeholder-dark-bg-400 focus:outline-none focus:ring-2 focus:ring-dark-green-500 focus:border-dark-green-500 transition-all duration-200"
+                placeholder="Voer je wachtwoord in">
+            @error('password')
+                <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+            @enderror
         </div>
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <input type="checkbox" name="remember" id="remember"
+                    class="h-4 w-4 bg-dark-bg-800 border-dark-bg-700 rounded text-dark-green-500 focus:ring-dark-green-500 focus:ring-offset-dark-bg-900">
+                <label for="remember" class="ml-3 text-sm text-white">Onthoud mij</label>
+            </div>
+            <a href="{{ route('password.request') }}" class="text-sm text-dark-green-400 hover:text-dark-green-300 transition-colors">
+                Wachtwoord vergeten?
+            </a>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
+        <button type="submit"
+            class="w-full py-3 px-4 bg-dark-green-600 hover:bg-dark-green-700 text-white rounded-lg font-semibold text-base transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5">
+            Inloggen
+        </button>
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
+        <div class="text-center text-sm text-dark-bg-300 pt-4 border-t border-dark-bg-700">
+            Heb je nog geen account? 
+            <a href="{{ route('register') }}" class="text-dark-green-400 hover:text-dark-green-300 font-medium transition-colors">
+                Registreer hier
+            </a>
         </div>
     </form>
-</x-guest-layout>
+@endsection

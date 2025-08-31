@@ -1,59 +1,74 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
+@extends('layouts.guest')
+
+@section('content')
+    <div class="text-center mb-8">
+        <h2 class="text-2xl font-bold text-white mb-2">Maak je account aan</h2>
+        <p class="text-dark-bg-300">Registreer je om de Twitter clone functionaliteiten te testen</p>
+    </div>
+
+    <form method="POST" action="{{ route('register') }}" class="space-y-6">
         @csrf
 
-        <!-- Name -->
         <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-        </div>
-        <!-- Username -->
-        <div class="mt-4">
-            <x-input-label for="username" :value="__('Username')" />
-            <x-text-input id="username" class="block mt-1 w-full" type="text" name="username"
-                          :value="old('username')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('username')" class="mt-2" />
+            <label for="name" class="block text-sm font-medium text-white mb-2">Volledige naam</label>
+            <input type="text" name="name" id="name" value="{{ old('name') }}" required
+                class="w-full px-4 py-3 bg-dark-bg-800 border border-dark-bg-700 rounded-lg text-white placeholder-dark-bg-400 focus:outline-none focus:ring-2 focus:ring-dark-green-500 focus:border-dark-green-500 transition-all duration-200"
+                placeholder="Voer je volledige naam in">
+            @error('name')
+                <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+            @enderror
         </div>
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div>
+            <label for="username" class="block text-sm font-medium text-white mb-2">Gebruikersnaam</label>
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-dark-bg-400 text-lg">@</span>
+                <input type="text" name="username" id="username" value="{{ old('username') }}" required
+                    class="w-full pl-10 px-4 py-3 bg-dark-bg-800 border border-dark-bg-700 rounded-lg text-white placeholder-dark-bg-400 focus:outline-none focus:ring-2 focus:ring-dark-green-500 focus:border-dark-green-500 transition-all duration-200"
+                    placeholder="Kies een gebruikersnaam">
+            </div>
+            @error('username')
+                <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+            @enderror
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div>
+            <label for="email" class="block text-sm font-medium text-white mb-2">Email adres</label>
+            <input type="email" name="email" id="email" value="{{ old('email') }}" required
+                class="w-full px-4 py-3 bg-dark-bg-800 border border-dark-bg-700 rounded-lg text-white placeholder-dark-bg-400 focus:outline-none focus:ring-2 focus:ring-dark-green-500 focus:border-dark-green-500 transition-all duration-200"
+                placeholder="Voer je email adres in">
+            @error('email')
+                <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+            @enderror
         </div>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+        <div>
+            <label for="password" class="block text-sm font-medium text-white mb-2">Wachtwoord</label>
+            <input type="password" name="password" id="password" required
+                class="w-full px-4 py-3 bg-dark-bg-800 border border-dark-bg-700 rounded-lg text-white placeholder-dark-bg-400 focus:outline-none focus:ring-2 focus:ring-dark-green-500 focus:border-dark-green-500 transition-all duration-200"
+                placeholder="Maak een sterk wachtwoord aan">
+            @error('password')
+                <p class="mt-2 text-sm text-red-400">{{ $message }}</p>
+            @enderror
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
+        <div>
+            <label for="password_confirmation" class="block text-sm font-medium text-white mb-2">Bevestig wachtwoord</label>
+            <input type="password" name="password_confirmation" id="password_confirmation" required
+                class="w-full px-4 py-3 bg-dark-bg-800 border border-dark-bg-700 rounded-lg text-white placeholder-dark-bg-400 focus:outline-none focus:ring-2 focus:ring-dark-green-500 focus:border-dark-green-500 transition-all duration-200"
+                placeholder="Bevestig je wachtwoord">
+        </div>
+
+        <button type="submit"
+            class="w-full py-3 px-4 bg-dark-green-600 hover:bg-dark-green-700 text-white rounded-lg font-semibold text-base transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5">
+            Account aanmaken
+        </button>
+
+        <div class="text-center text-sm text-dark-bg-300 pt-4 border-t border-dark-bg-700">
+            Heb je al een account? 
+            <a href="{{ route('login') }}" class="text-dark-green-400 hover:text-dark-green-300 font-medium transition-colors">
+                Log hier in
             </a>
-
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
         </div>
     </form>
-</x-guest-layout>
+@endsection
