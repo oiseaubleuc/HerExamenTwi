@@ -1,0 +1,105 @@
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches: [main, test]
+  workflow_dispatch: # Manual trigger
+
+env:
+  KUBECONFIG: ${{ github.workspace }}/kubeconfig
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: pdo_sqlite, mbstring, bcmath, intl
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run tests
+        run: php artisan test
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup k3d
+        uses: jamesdphillips/setup-k3d@v1
+        with:
+          version: v5.6.0
+
+      - name: Create k3d cluster
+        run: |
+          k3d cluster create mini-twitter --wait --timeout 300s
+          k3d kubeconfig get mini-twitter > $KUBECONFIG
+
+      - name: Deploy to Kubernetes
+        run: |
+          cd k8s
+          chmod +x deploy.sh
+          ./deploy.sh
+
+      - name: Verify deployment
+        run: |
+          kubectl get all -n mini-twitter
+          kubectl get pods -n mini-twitter
+          kubectl get services -n mini-twitter
+
+      - name: Test application
+        run: |
+          # Wait for pods to be ready
+          kubectl wait --for=condition=ready pod -l app=mini-twitter -n mini-twitter --timeout=300s
+          
+          # Port forward and test
+          kubectl port-forward -n mini-twitter service/mini-twitter-nginx-service 8080:80 &
+          sleep 10
+          
+          # Test if app responds
+          curl -f http://localhost:8080 || exit 1
+
+      - name: Cleanup k3d cluster
+        if: always()
+        run: |
+          k3d cluster delete mini-twitter || true
