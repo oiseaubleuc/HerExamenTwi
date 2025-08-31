@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mini-twitter-config
+  namespace: mini-twitter
+data:
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  DB_CONNECTION: "sqlite"
+  CACHE_DRIVER: "file"
+  SESSION_DRIVER: "file"
+  QUEUE_CONNECTION: "sync"
+  LOG_CHANNEL: "stack"
+  BROADCAST_DRIVER: "log"
