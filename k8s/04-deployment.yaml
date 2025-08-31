@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: app
-        image: oiseaubleuc/herexamentwi:latest
+        image: ghcr.io/oiseaubleuc/herexamentwi:latest
         ports:
         - containerPort: 9000
         envFrom:
