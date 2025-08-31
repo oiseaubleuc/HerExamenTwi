@@ -3,7 +3,7 @@ name: Deploy to Kubernetes
 on:
   push:
     branches: [main, test]
-  workflow_dispatch: # Manual trigger
+  workflow_dispatch:
 
 env:
   KUBECONFIG: ${{ github.workspace }}/kubeconfig
@@ -103,11 +103,11 @@ jobs:
         run: |
           # Wait for pods to be ready
           kubectl wait --for=condition=ready pod -l app=mini-twitter -n mini-twitter --timeout=300s
-          
+
           # Port forward and test
           kubectl port-forward -n mini-twitter service/mini-twitter-nginx-service 8080:80 &
           sleep 10
-          
+
           # Test if app responds
           curl -f http://localhost:8080 || exit 1
 
