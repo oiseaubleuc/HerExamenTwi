@@ -67,6 +67,8 @@ jobs:
             ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          driver-opts: |
+            image=moby/buildkit:v0.12.0
 
   deploy:
     needs: test-and-build
