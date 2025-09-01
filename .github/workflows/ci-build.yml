@@ -63,6 +63,13 @@ jobs:
       - name: Run migrations (once for testing DB)
         run: php artisan migrate --force
 
+      - name: Smoke test homepage
+        run: |
+          php artisan serve --host=127.0.0.1 --port=8000 & echo $! > server.pid
+          sleep 3
+          curl -fsS http://127.0.0.1:8000/ -o /dev/null
+          kill $(cat server.pid)
+
       - name: Run tests
         run: php artisan test
 

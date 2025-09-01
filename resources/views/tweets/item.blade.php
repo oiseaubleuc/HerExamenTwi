@@ -31,21 +31,6 @@
             <span class="flex items-center gap-1"><span>♡</span><span>{{ $tweet->likes_count }}</span></span>
         @endauth
 
-        @auth
-            <form method="POST" action="{{ route('tweets.retweet', $tweet) }}" class="inline">
-                @csrf
-                <button class="flex items-center gap-1" title="{{ $tweet->retweets->contains(auth()->id()) ? 'Undo retweet' : 'Retweet' }}">
-                    <span>🔄</span>
-                    <span>{{ $tweet->retweets->count() }}</span>
-                </button>
-            </form>
-        @else
-            <span class="flex items-center gap-1">
-                <span>🔄</span>
-                <span>{{ $tweet->retweets->count() }}</span>
-            </span>
-        @endauth
-
         <span class="text-gray-500">{{ $tweet->replies_count }} replies</span>
     </div>
 

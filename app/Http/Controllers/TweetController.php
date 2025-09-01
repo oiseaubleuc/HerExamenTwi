@@ -13,8 +13,8 @@ class TweetController extends Controller
         $userId = Auth::id();
 
         $tweets = Tweet::query()
-            ->with(['user', 'retweets'])
-            ->withCount(['likes', 'replies', 'retweets'])
+            ->with(['user'])
+            ->withCount(['likes', 'replies'])
             ->withExists([
                 'likes as liked_by_auth' => fn($q) => $q->where('user_id', $userId),
             ])
