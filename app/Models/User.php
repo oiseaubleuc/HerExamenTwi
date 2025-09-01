@@ -19,8 +19,12 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
+        'avatar_path',
     ];
-    public function getRouteKeyName(): string { return 'username'; }
+    public function getRouteKeyName(): string
+    {
+        return 'username';
+    }
 
 
     protected $hidden = [
@@ -50,6 +54,11 @@ class User extends Authenticatable
         return $this->hasMany(Like::class);
     }
 
+    public function retweets()
+    {
+        return $this->belongsToMany(Tweet::class, 'retweets', 'user_id', 'tweet_id')->withTimestamps();
+    }
+
     // Follow system (optional; requires 'follows' pivot)
     public function following()
     {
@@ -61,6 +70,13 @@ class User extends Authenticatable
         return $this->belongsToMany(User::class, 'follows', 'followed_id', 'follower_id');
     }
 
+    public function isFollowedBy(User $user): bool
+    {
+        return $this->followers()->where('follower_id', $user->id)->exists();
+    }
 
-
+    public function isFollowing(User $user): bool
+    {
+        return $this->following()->where('followed_id', $user->id)->exists();
+    }
 }

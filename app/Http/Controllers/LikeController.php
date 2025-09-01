@@ -3,18 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tweet;
+use Illuminate\Support\Facades\Auth;
 
 class LikeController extends Controller
 {
     public function store(Tweet $tweet)
     {
-        $tweet->likes()->firstOrCreate(['user_id' => auth()->id()]);
+        $tweet->likes()->toggle([Auth::id()]);
         return back();
     }
 
     public function destroy(Tweet $tweet)
     {
-        $tweet->likes()->where('user_id', auth()->id())->delete();
+        $tweet->likes()->detach(Auth::id());
         return back();
     }
 }

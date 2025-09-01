@@ -20,23 +20,30 @@
 
     <div class="mt-3 text-sm flex items-center gap-5">
         @auth
-            @if($tweet->liked_by_auth)
-                <form method="POST" action="{{ route('likes.destroy', $tweet) }}">
-                    @csrf @method('DELETE')
-                    <button class="flex items-center gap-1" aria-pressed="true" title="Unlike">
-                        <span>♥</span><span>{{ $tweet->likes_count }}</span>
-                    </button>
-                </form>
-            @else
-                <form method="POST" action="{{ route('likes.store', $tweet) }}">
-                    @csrf
-                    <button class="flex items-center gap-1" aria-pressed="false" title="Like">
-                        <span>♡</span><span>{{ $tweet->likes_count }}</span>
-                    </button>
-                </form>
-            @endif
+            <form method="POST" action="{{ route('likes.toggle', $tweet) }}">
+                @csrf
+                <button class="flex items-center gap-1" title="{{ $tweet->liked_by_auth ? 'Unlike' : 'Like' }}">
+                    <span>{!! $tweet->liked_by_auth ? '♥' : '♡' !!}</span>
+                    <span>{{ $tweet->likes_count }}</span>
+                </button>
+            </form>
         @else
             <span class="flex items-center gap-1"><span>♡</span><span>{{ $tweet->likes_count }}</span></span>
+        @endauth
+
+        @auth
+            <form method="POST" action="{{ route('tweets.retweet', $tweet) }}" class="inline">
+                @csrf
+                <button class="flex items-center gap-1" title="{{ $tweet->retweets->contains(auth()->id()) ? 'Undo retweet' : 'Retweet' }}">
+                    <span>🔄</span>
+                    <span>{{ $tweet->retweets->count() }}</span>
+                </button>
+            </form>
+        @else
+            <span class="flex items-center gap-1">
+                <span>🔄</span>
+                <span>{{ $tweet->retweets->count() }}</span>
+            </span>
         @endauth
 
         <span class="text-gray-500">{{ $tweet->replies_count }} replies</span>

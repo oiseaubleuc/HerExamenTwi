@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mini-twitter-migrations
+  namespace: mini-twitter
+spec:
+  template:
+    spec:
+      containers:
+      - name: migrations
+        image: ghcr.io/oiseaubleuc/herexamentwi:latest
+        command: ["php", "artisan", "migrate", "--force"]
+        envFrom:
+        - configMapRef:
+            name: mini-twitter-config
+        - secretRef:
+            name: mini-twitter-secrets
+        volumeMounts:
+        - name: database-storage
+          mountPath: /var/www/html/database
+        - name: storage-storage
+          mountPath: /var/www/html/storage
+        - name: cache-storage
+          mountPath: /var/www/html/bootstrap/cache
+      volumes:
+      - name: database-storage
+        persistentVolumeClaim:
+          claimName: mini-twitter-db-pvc
+      - name: storage-storage
+        emptyDir: {}
+      - name: cache-storage
+        emptyDir: {}
+      restartPolicy: OnFailure

@@ -5,6 +5,7 @@ use App\Http\Controllers\TweetController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\ReplyController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RetweetController;
 
 Route::get('/', [TweetController::class, 'index'])->name('tweets.index');
 
@@ -17,8 +18,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/tweets', [TweetController::class, 'store'])->name('tweets.store');
     Route::delete('/tweets/{tweet}', [TweetController::class, 'destroy'])->name('tweets.destroy');
 
-    Route::post('/tweets/{tweet}/like', [LikeController::class, 'store'])->name('likes.store');
-    Route::delete('/tweets/{tweet}/like', [LikeController::class, 'destroy'])->name('likes.destroy');
+    Route::post('/tweets/{tweet}/like', [LikeController::class, 'store'])->name('likes.toggle');
+
+    Route::post('/tweets/{tweet}/retweet', [RetweetController::class, 'store'])->name('tweets.retweet');
+    Route::post('/users/{user}/follow', [FollowController::class, 'toggle'])->name('users.follow');
 
     Route::post('/tweets/{tweet}/replies', [ReplyController::class, 'store'])->name('replies.store');
 
@@ -32,4 +35,4 @@ Route::get('/@{user:username}', [\App\Http\Controllers\ProfileController::class,
     ->name('profile.show');
 Route::get('/@{username}', [ProfileController::class, 'show'])->name('profile.show');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
